@@ -1,0 +1,26 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# data
+data/
+.DS_Store
+
+# log files
+logs/
+*.log
+
+# notebooks d'exploration
+notebooks/
+*.ipynb
+*.ipynb_checkpoints
+
+# documentation interne
+docs/

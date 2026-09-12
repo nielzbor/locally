@@ -1,0 +1,52 @@
+[project]
+name = "locally"
+version = "0.1.0"
+description = "Your local AI assistant and task manager"
+readme = "README.md"
+authors = [
+    { name = "nielzbor", email = "nielzbor@gmail.com" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "aioboto3>=7.0.0",
+    "arize-phoenix>=20.3.0",
+    "instructor>=1.15.4",
+    "ipywidgets>=8.1.9",
+    "jupyterlab>=4.6.3",
+    "loguru>=0.7.3",
+    "marker-pdf>=2.0.0",
+    "ollama>=0.6.2",
+    "openai>=2.54.0",
+    "openinference-instrumentation-instructor>=0.1.22",
+    "openinference-instrumentation-ollama>=0.1.4",
+    "openinference-instrumentation-openai>=0.1.56",
+    "opentelemetry-exporter-otlp>=1.44.0",
+    "opentelemetry-sdk>=1.44.0",
+    "pandas>=3.0.5",
+    "pdfplumber>=0.11.9",
+    "pre-commit>=4.6.2",
+    "pyarrow>=25.0.1",
+    "pytest>=9.1.1",
+    "typer>=0.27.1",
+]
+
+[project.scripts]
+locally = "locally.cli:app"
+
+[build-system]
+requires = ["uv_build>=0.12.1,<0.13.0"]
+build-backend = "uv_build"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.16.6",
+]
+
+[tool.ruff.lint]
+ignore = [
+    "DTZ001", # datetime sans tzinfo (dans les tests)
+]
