@@ -61,7 +61,7 @@ def _split_words_by_totals(
             y_total = w["top"] - y_margin_thresh
             break
 
-    # 2. Détection du solde initial (doit obligatoirement être au-dessus de y_total s'il y a un total)
+    # 2. Détection du solde initial (au-dessus de y_total s'il y a un total, sinon premier SOLDE en haut)
     for w in words:
         if "SOLDE" in w["text"]:
             # Si le solde est en dessous du total, c'est le solde final : il ne borne pas le haut des transactions
@@ -325,6 +325,8 @@ def extract_pdf_to_dataframe(
                 transactions.extend(txs)
 
                 if any(summary.values()):
-                    summary_data = summary
+                    for key, val in summary.items():
+                        if val is not None:
+                            summary_data[key] = val
 
     return pd.DataFrame(data=transactions), summary_data

@@ -1,6 +1,6 @@
 [project]
 name = "locally"
-version = "0.1.0"
+version = "0.1.2"
 description = "Your local AI assistant and task manager"
 readme = "README.md"
 authors = [
