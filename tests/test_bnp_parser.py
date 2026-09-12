@@ -44,6 +44,61 @@ def test_split_words_by_totals_full_page():
     assert "70,00" in summary_texts
 
 
+def test_split_words_by_totals_single_page_statement():
+    """Teste un relevé complet tenant sur une seule page :
+    - Solde initial en haut (avant transactions)
+    - Transactions au milieu
+    - Ligne TOTAL des opérations en bas
+    - Ligne SOLDE final sous le TOTAL
+    """
+    words = [
+        # 1. Solde initial en haut (Y: 80 à 90)
+        {"text": "SOLDE", "top": 80, "bottom": 90, "x0": 68, "x1": 100},
+        {"text": "CREDITEUR", "top": 80, "bottom": 90, "x0": 105, "x1": 150},
+        {"text": "AU", "top": 80, "bottom": 90, "x0": 155, "x1": 170},
+        {"text": "01.07.2025", "top": 80, "bottom": 90, "x0": 175, "x1": 218},
+        {"text": "2 000,00", "top": 80, "bottom": 90, "x0": 510, "x1": 545},
+        # 2. Transactions (Y: 130 à 180)
+        {"text": "05.07", "top": 130, "bottom": 140, "x0": 50, "x1": 80},
+        {"text": "MONOPRIX", "top": 130, "bottom": 140, "x0": 100, "x1": 150},
+        {"text": "50,00", "top": 130, "bottom": 140, "x0": 380, "x1": 420},
+        {"text": "10.07", "top": 170, "bottom": 180, "x0": 50, "x1": 80},
+        {"text": "SALAIRE", "top": 170, "bottom": 180, "x0": 100, "x1": 150},
+        {"text": "1 500,00", "top": 170, "bottom": 180, "x0": 510, "x1": 550},
+        # 3. Ligne TOTAL (Y: 280 à 285)
+        {"text": "TOTAL", "top": 280, "bottom": 285, "x0": 68, "x1": 100},
+        {"text": "DES", "top": 280, "bottom": 285, "x0": 105, "x1": 125},
+        {"text": "OPERATIONS", "top": 280, "bottom": 285, "x0": 130, "x1": 182},
+        {"text": "50,00", "top": 280, "bottom": 285, "x0": 410, "x1": 445},
+        {"text": "1 500,00", "top": 280, "bottom": 285, "x0": 510, "x1": 545},
+        # 4. Ligne SOLDE final sous le TOTAL (Y: 300 à 305)
+        {"text": "SOLDE", "top": 300, "bottom": 305, "x0": 68, "x1": 100},
+        {"text": "CREDITEUR", "top": 300, "bottom": 305, "x0": 105, "x1": 150},
+        {"text": "AU", "top": 300, "bottom": 305, "x0": 155, "x1": 170},
+        {"text": "31.07.2025", "top": 300, "bottom": 305, "x0": 175, "x1": 218},
+        {"text": "3 450,00", "top": 300, "bottom": 305, "x0": 510, "x1": 545},
+    ]
+
+    tx_words, summary_words = _split_words_by_totals(words, y_margin_thresh=2)
+
+    # Les transactions doivent exclure le solde initial ET tout ce qui est à partir du TOTAL
+    assert [w["text"] for w in tx_words] == [
+        "05.07",
+        "MONOPRIX",
+        "50,00",
+        "10.07",
+        "SALAIRE",
+        "1 500,00",
+    ]
+
+    summary_texts = [w["text"] for w in summary_words]
+    # Doit contenir les deux lignes SOLDE et la ligne TOTAL
+    assert summary_texts.count("SOLDE") == 2
+    assert "2 000,00" in summary_texts
+    assert "TOTAL" in summary_texts
+    assert "3 450,00" in summary_texts
+
+
 def test_split_words_by_totals_last_page():
     """Teste la dernière page d'un relevé : pas de solde initial en haut, transactions, puis TOTAL et SOLDE final en bas."""
     words = [
@@ -210,3 +265,57 @@ def test_parse_summary_words_empty(mock_col_boundaries):
         "total_credit": None,
         "solde_final": None,
     }
+
+
+def test_parse_summary_words_single_page_both_solde_lines(mock_col_boundaries):
+    """Teste l'extraction sur un relevé d'une seule page où le solde final
+    ne contient pas forcément 'NOUVEAU', mais simplement 'SOLDE CREDITEUR AU ...'.
+    """
+    summary_words = [
+        # 1. Ligne Solde Initial en haut
+        {"text": "SOLDE", "top": 80, "x0": 68},
+        {"text": "CREDITEUR", "top": 80, "x0": 105},
+        {"text": "AU", "top": 80, "x0": 155},
+        {"text": "01.07.2025", "top": 80, "x0": 175},
+        {"text": "2 000,00", "top": 80, "x0": 450},  # Dans la colonne crédit
+        # 2. Ligne Total des opérations en bas
+        {"text": "TOTAL", "top": 280, "x0": 68},
+        {"text": "DES", "top": 280, "x0": 105},
+        {"text": "OPERATIONS", "top": 280, "x0": 130},
+        {"text": "50,00", "top": 280, "x0": 380},  # Dans la colonne débit
+        {"text": "1 500,00", "top": 280, "x0": 450},  # Dans la colonne crédit
+        # 3. Ligne Solde Final en bas sous le Total
+        {"text": "SOLDE", "top": 300, "x0": 68},
+        {"text": "CREDITEUR", "top": 300, "x0": 105},
+        {"text": "AU", "top": 300, "x0": 155},
+        {"text": "31.07.2025", "top": 300, "x0": 175},
+        {"text": "3 450,00", "top": 300, "x0": 450},  # Dans la colonne crédit
+    ]
+
+    summary = _parse_summary_words(summary_words, mock_col_boundaries)
+
+    assert summary["solde_initial"] == "2 000,00"
+    assert summary["total_debit"] == "50,00"
+    assert summary["total_credit"] == "1 500,00"
+    assert summary["solde_final"] == "3 450,00"
+
+
+def test_parse_summary_words_two_solde_without_total(mock_col_boundaries):
+    """Teste le cas où la page contient deux lignes SOLDE (initial et final) sans ligne TOTAL intermédiaire."""
+    summary_words = [
+        # Ligne 1 : Solde initial
+        {"text": "SOLDE", "top": 100, "x0": 90},
+        {"text": "CREDITEUR", "top": 100, "x0": 130},
+        {"text": "1 000,00", "top": 100, "x0": 450},
+        # Ligne 2 : Solde final
+        {"text": "SOLDE", "top": 400, "x0": 90},
+        {"text": "CREDITEUR", "top": 400, "x0": 130},
+        {"text": "1 200,00", "top": 400, "x0": 450},
+    ]
+
+    summary = _parse_summary_words(summary_words, mock_col_boundaries)
+
+    assert summary["solde_initial"] == "1 000,00"
+    assert summary["total_debit"] is None
+    assert summary["total_credit"] is None
+    assert summary["solde_final"] == "1 200,00"
