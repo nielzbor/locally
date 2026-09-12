@@ -9,7 +9,7 @@ def _get_tx_type(text):
 
     if text_upper.startswith("PRLV") or "PRLV SEPA" in text_upper:
         return "PRELEVEMENT"
-    elif text_upper.startswith("DU", "FACTURE(S) CARTE "):
+    elif text_upper.startswith(("DU", "FACTURE(S) CARTE ")):
         return "CARTE"
     elif text_upper.startswith("VIR") or "VIREMENT" in text_upper:
         return "VIREMENT"

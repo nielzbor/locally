@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.1.1] - 2026-09-12
+
+### Fixed
+
+- Fix card transaction prefix check in `feature_extraction.py` by passing a tuple to `str.startswith`.
+
 ## [0.1.0] - 2026-09-12
 
 ### Added
